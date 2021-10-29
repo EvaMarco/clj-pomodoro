@@ -72,11 +72,9 @@
 
 (defn show-time-left [time-start now]
   (let [time-label      (.getElementById js/document "time-left")
-        start-seconds   (+ (* (:minute time-start) 60) (:second time-start))
-        now-seconds     (+ (* (:minute now) 60) (:second now))
-        diff-seconds    (dt/seconds-diff now-seconds start-seconds)
+        diff-seconds    (- (* 25 60) (dt/seconds-diff now time-start))
         diff-min-result (mth/floor (/ diff-seconds 60))
-        rest-sec-result (mod diff-seconds 60)]
+        rest-sec-result (mth/floor (mod diff-seconds 60))]
     (unchecked-set time-label "textContent" (str "you have " diff-min-result " minutes and " rest-sec-result " seconds left"))))
 
 (defn clear-time-left []
