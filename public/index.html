@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Clojure for Javascript developers</title>
+
+    <link rel="stylesheet" href="css/mvp.css">
+    <link rel="stylesheet" href="css/styles.css">
+ </head>
+
+  <body>
+    <div class="main">
+
+      <canvas id="clock"></canvas>
+
+      <div class="actions">
+        <button id="start-btn"
+                class="btn primary"
+                onClick="clocks.main.handle_start(event)">Start</button>
+        <button id="stop-btn"
+                class="btn secondary"
+                onClick="clocks.main.handle_stop(event)"
+                disabled>Stop</button>
+
+        <span id="time-left" class="info"></span>
+      </div>
+
+    </div>
+
+    <script src="js/main.js"></script>
+
+  </body>
+</html>

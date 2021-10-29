@@ -1,0 +1,11 @@
+{
+  "name": "clojure-for-js-devs",
+  "version": "0.0.1",
+  "scripts": {
+    "start": "shadow-cljs watch clocks",
+    "repl": "shadow-cljs browser-repl"
+  },
+  "devDependencies": {
+    "shadow-cljs": "2.15.12"
+  }
+}
