@@ -1,4 +1,6 @@
-(ns clocks.draw)
+(ns clocks.draw
+    (:require
+     [clocks.common :as cmm]))
 
 (def PI (.-PI js/Math))
 (def TWO_PI (* 2 PI))
@@ -55,7 +57,8 @@
   [ctx cx cy radius from-angle]
   (aset ctx "fillStyle" "rgba(255,0,0,0.2)")
   
-  (let [to-angle (+ from-angle (* 30 5))
+  
+  (let [to-angle (+ from-angle (* 6 cmm/pomodoro-last))
         from-angle (deg->rad (- from-angle 90))
         to-angle (deg->rad (- to-angle 90))]
     (.beginPath ctx)
