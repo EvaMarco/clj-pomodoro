@@ -18,23 +18,16 @@
 
 ;; LIVE CODING
 
-
 (defn ^:export handle-start [event]
-  (let [date-now    (dt/now)]
+  (let [date-now    (dt/now)
+        next-state (st/get-next-state (:history @st/state))]
     (swap! st/state #(assoc % :show-slice-time date-now))
-    (swap! st/state #(assoc % :state :counting))
-    (st/add-to-history :start-counting date-now)))
+    (swap! st/state #(assoc % :state next-state))))
 
-(defn ^:export handle-start-rest [event]
-    (let [date-now    (dt/now)]
-      (swap! st/state #(assoc % :show-slice-time date-now))
-      (swap! st/state #(assoc % :state :resting))
-      (st/add-to-history :start-resting date-now)))
 
 (defn ^:export handle_stop [event]
   (swap! st/state #(assoc % :show-slice-time nil))
   (swap! st/state #(assoc % :state :user-stop))
-  (st/add-to-history :stop (dt/now))
   (st/update-label))
 
 (defn ^:export handle-reset [event]
@@ -51,7 +44,8 @@
     (when-let [show-slice-time (:show-slice-time @st/state)]
       (let [type (case (:state @st/state)
                    :counting (:pomodoro-slice cmm/slice-types)
-                   :resting (:short-rest-slice cmm/slice-types))]
+                   :resting (:short-rest-slice cmm/slice-types)
+                   :long-resting (:long-rest-slice cmm/slice-types))]
         (d/draw-slice ctx x-center y-center radius show-slice-time type)
         (st/check-time-end (:size type))
         (st/update-label (:size type)))))

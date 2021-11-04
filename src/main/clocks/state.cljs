@@ -2,48 +2,60 @@
   (:require
    [clocks.date :as dt]
    [clocks.math :as mth]
-   [clocks.utils :as util]))
+   [clocks.utils :as util]
+   [cljs.pprint :as pp]))
 
 (def state (atom nil))
 
-
-(add-watch state :watcher (fn [_ _ _ new-value]
-                            ;; (pp/pprint new-value)
-                            (.setItem js/localStorage "state" (util/clj->str new-value))
-                            (let [time-label      (.getElementById js/document "time-left")]
-                              (unchecked-set  time-label "textContent" (:label-text new-value))
-                              )))
-
-
-(add-watch state :stop (fn [_ _ _ new-value]
-                         (let [stop-button (.getElementById js/document "stop-btn")
-                               start-button (.getElementById js/document "start-btn")
-                               start-rest-button (.getElementById js/document "start-rest-btn")]
-                           ;;  (.log js/console (clj->js new-value))
-                           (unchecked-set stop-button "disabled" (nil? (:show-slice-time new-value)))
-                           (unchecked-set start-button "disabled" (some? (:show-slice-time new-value)))
-                           (unchecked-set start-rest-button "disabled" (some? (:show-slice-time new-value))))))
-
-(defn add-to-history [action time]
+(defn add-to-history [slice-state time]
   (swap! state (fn [old-state]
                  (update old-state :history (fn [old-history]
-                                              (conj old-history {:action action :time time}))))))
+                                              (conj old-history {:state slice-state :time time}))))))
   ;; (swap! state update :history conj {:action action :time time})
 
-(defn get-next-state [history actual-state])
-  ;; (let [counter (+ (count history) 1)
-  ;;       reminder (rem counter 12)]
-  ;;   (.log js/console  "actual-state" (clj->js actual-state))
-  ;;   (.log js/console  "history" (clj->js history))
-  ;;   (.log js/console  "counter" counter)
-  ;;   (.log js/console  "reminder" reminder)
-  ;;   (cond
-  ;;     (some #(= reminder %) [1 5 9]) (.log js/console  "start-counting")
-  ;;     (some #(= reminder %) [3 7]) (.log js/console  "start-short-rest")
-  ;;     (some #(= reminder %) [11]) (.log js/console  "start-long-rest")
-  ;;     :else (.log js/console  "stop"))
+(remove-watch state :watcher)
+(add-watch state :watcher (fn [_ _ old-value new-value]                            
+                            (.setItem js/localStorage "state" (util/clj->str new-value))
+                            (when (not= (:state old-value) (:state new-value))
+                              (pp/pprint new-value)
+                              (add-to-history (:state new-value) (dt/now)))
+                            (let [time-label      (.getElementById js/document "time-left")]
+                              (unchecked-set  time-label "textContent" (:label-text new-value)))))
 
-  ;;   )
+(remove-watch state :stop)
+(add-watch state :stop (fn [_ _ _ new-value]
+                         (let [stop-button (.getElementById js/document "stop-btn")
+                               start-button (.getElementById js/document "start-btn")]
+                           ;;  (.log js/console (clj->js new-value))
+                           (unchecked-set stop-button "disabled" (nil? (:show-slice-time new-value)))
+                           (unchecked-set start-button "disabled" (some? (:show-slice-time new-value))))))
+
+(defn get-next-state [history]
+  (let [is-stop-time? #(and (not= % :time-stop) (not= % :user-stop))
+        is-long-resting? (fn [[_ item]] (= item :long-resting))
+        index-after?
+        (fn [from-index]
+          (fn [[index _]] (or (nil? from-index) (> index from-index))))
+        is-counting? (fn [[_ item]] (= item :counting))
+        clean-history (->>  history
+                            (map :state)
+                            (filter is-stop-time?))
+        clean-indexed-history (map-indexed vector clean-history)
+        last-long-index (->> clean-indexed-history
+                             (filter is-long-resting?)
+                             (last)
+                             (first))
+        num-counting (->> clean-indexed-history
+                          (filter (index-after? last-long-index))
+                          (filter is-counting?)
+                          (count))
+        last-state (last clean-history)]
+    (if (or (= last-state :resting) (nil? last-state))
+      :counting
+      (if (> num-counting 2)
+        :long-resting
+        :resting))))
+
 
 
 (defn check-time-end [duration]
@@ -51,7 +63,6 @@
     (when (<= diff-seconds 0)
       (swap! state #(assoc % :state :time-stop))
       (swap! state #(assoc % :show-slice-time nil))
-      (add-to-history :finish (dt/now))
       (when (= (:notification-permission @state) "granted")
         (js/Notification. "Your pomodoro time has exprired, Take a rest!")))
     ))
@@ -69,7 +80,7 @@
    (update-label nil))
   ([duration]
    (case (:state @state)
-     (:counting :resting) (create-time-text duration)
+     (:counting :resting :long-resting) (create-time-text duration)
      :time-stop (swap! state #(assoc % :label-text "Your pomodoro time has exprired"))
      :user-stop (swap! state #(assoc % :label-text ""))
      nil)))
