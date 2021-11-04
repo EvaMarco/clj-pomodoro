@@ -5,8 +5,9 @@
     (let [parsed-map (js->clj (.parse js/JSON data-str) :keywordize-keys true)
           fix-item
           (fn [item] (update item :state keyword))]
-      (update parsed-map :history #(mapv fix-item %))
-      (update parsed-map :state keyword))))
+      (-> parsed-map
+          (update :history #(mapv fix-item %))
+          (update :state keyword)))))
 
 
 (defn clj->str [data]

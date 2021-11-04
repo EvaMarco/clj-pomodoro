@@ -21,13 +21,15 @@
 (defn ^:export handle-start [event]
   (let [date-now    (dt/now)
         next-state (st/get-next-state (:history @st/state))]
-    (swap! st/state #(assoc % :show-slice-time date-now))
-    (swap! st/state #(assoc % :state next-state))))
+    (swap! st/state #(assoc % :show-slice-time date-now
+                            :state next-state))
+                    
+    
+    ))
 
 
 (defn ^:export handle_stop [event]
-  (swap! st/state #(assoc % :show-slice-time nil))
-  (swap! st/state #(assoc % :state :user-stop))
+  (swap! st/state #(assoc % :show-slice-time nil :state :user-stop))
   (st/update-label))
 
 (defn ^:export handle-reset [event]

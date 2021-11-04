@@ -50,19 +50,16 @@
                           (filter is-counting?)
                           (count))
         last-state (last clean-history)]
-    (if (or (= last-state :resting) (nil? last-state))
+    (if (or (= last-state :long-resting) (= last-state :resting) (nil? last-state))
       :counting
       (if (> num-counting 2)
         :long-resting
         :resting))))
 
-
-
 (defn check-time-end [duration]
   (let [diff-seconds    (- (* duration 60) (dt/seconds-diff (dt/now) (:show-slice-time @state)))]
     (when (<= diff-seconds 0)
-      (swap! state #(assoc % :state :time-stop))
-      (swap! state #(assoc % :show-slice-time nil))
+      (swap! state #(assoc % :state :time-stop :show-slice-time nil))
       (when (= (:notification-permission @state) "granted")
         (js/Notification. "Your pomodoro time has exprired, Take a rest!")))
     ))
