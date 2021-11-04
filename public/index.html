@@ -18,10 +18,16 @@
         <button id="start-btn"
                 class="btn primary"
                 onClick="clocks.main.handle_start(event)">Start</button>
+        <button id="start-rest-btn"
+                class="btn primary"
+                onClick="clocks.main.handle_start_rest(event)">Start Rest</button>
         <button id="stop-btn"
                 class="btn secondary"
                 onClick="clocks.main.handle_stop(event)"
                 disabled>Stop</button>
+        <button id="reset-btn"
+                class="btn secondary"
+                onClick="clocks.main.handle_reset(event)">Reset</button>
 
         <span id="time-left" class="info"></span>
       </div>

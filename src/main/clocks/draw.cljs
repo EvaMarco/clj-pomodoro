@@ -51,17 +51,51 @@
    (.moveTo ctx x1 y1)
    (.lineTo ctx x2 y2)
    (.stroke ctx)))
-
+  
 (defn slice
   "Draws a \"pizza slice\" shape"
-  [ctx cx cy radius from-angle]
-  (aset ctx "fillStyle" "rgba(255,0,0,0.2)")
-  
-  
-  (let [to-angle (+ from-angle (* 6 cmm/pomodoro-last))
+  [ctx cx cy radius from-angle color size]
+  (aset ctx "fillStyle" color)
+  (let [to-angle (+ from-angle (* 6 size))
         from-angle (deg->rad (- from-angle 90))
         to-angle (deg->rad (- to-angle 90))]
     (.beginPath ctx)
     (.moveTo ctx cx cy)
     (.arc ctx cx cy radius from-angle to-angle)
     (.fill ctx)))
+
+
+(defn draw-hands [ctx x-center y-center radius {:keys [hour minute second]}]
+  (let [hour-angle      (* (/ 360 12) hour)
+        minute-angle    (* (/ 360 60) minute)
+        second-angle    (* (/ 360 60) second)
+        center-clock    {:x x-center :y y-center}
+        hour-hand-end   (get-point x-center y-center radius hour-angle 0.5)
+        minute-hand-end (get-point x-center y-center radius minute-angle 0.8)
+        second-hand-end (get-point x-center y-center radius second-angle 0.9)]
+    (line ctx center-clock hour-hand-end  5 "gray")
+    (line ctx center-clock minute-hand-end  3 "silver")
+    (line ctx center-clock second-hand-end  1 "red")))
+
+(defn draw-slice [ctx x-center y-center radius {:keys [minute]} {:keys [size color]}]
+  (let [from-angle (* (/ 360 60) minute)]
+    (slice ctx x-center y-center radius from-angle color size)))
+
+(defn draw-clock [ctx x-center y-center radius time-now]
+  (circle ctx x-center y-center radius)
+  (doseq [i (range 0 12)]
+    (let [current-angle (* (/ 360 12) i)
+          hour-start    (get-point x-center y-center radius current-angle cmm/distance-hour)
+          hour-end      (get-point x-center y-center radius current-angle 1)
+          time-place    (get-point x-center y-center radius current-angle 0.8)]
+      (line ctx hour-start hour-end)
+      (text ctx time-place (if (= i 0)
+                             "12"
+                             (str i)))))
+  (doseq [i (range 0 60)]
+    (let [current-angle (* (/ 360 60) i)
+          minute-start  (get-point x-center y-center radius current-angle 0.9)
+          minute-end    (get-point x-center y-center radius current-angle 1)]
+      (when-not (= (mod i 5) 0)
+        (line ctx minute-start minute-end 1 "pink"))))
+  (draw-hands ctx x-center y-center radius time-now))
